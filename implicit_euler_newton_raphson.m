@@ -21,7 +21,7 @@ function implicit_euler_newton_raphson()
     v0 = 0;
     F0 = 0;
     
-    h = 0.01;
+    h = 0.2;
     t_start = 0;
     t_end = 10;
     t=t_start:h:t_end;
@@ -34,23 +34,21 @@ function implicit_euler_newton_raphson()
     for k = 1 : length(t)
         % Newton-Raphosn relies on good intial value
         % As an initial guess, a 1-step forward Euler is used
-        %v1_h = v1_hat(M, B, K, 0, x0, v0, h);
-        %v1 = v1_h
+        %v1 = v1_hat(M, B, K, 0, x0, v0, h);     
 
         % Initializing v1 = 0 also works. It just needs more iterations
-        v1 = 0;
-        v1_ = inf;
+        v1 = 0;        
         
         % Newton-Rapshon
         % x(k+1) = x(k) - g(x(k))/g'(x(k))
         % Since the system is linear, g'(x(k)) = constant
         g_d =  M/h + B + K * h;
         while(1) % Newton-Raphson iteration
-            v1 = v1 - (g(M, B, K, F0, x0, v0, v1, h) / g_d);
-            v1_ = v1;
+            v1_ = v1 - (g(M, B, K, F0, x0, v0, v1, h) / g_d);            
             if abs(v1 - v1_) <0.0001
                 break;
             end
+            v1 = v1_;
         end                        
         
         x1 = x0 + v0 * h;   

@@ -13,7 +13,7 @@ function implicit_euler_newton_raphson()
     
     K = 100;           % spring stiffness. N/m
     M = 5;             % mass, kg
-    B = 2*sqrt(K*M);  %critical damping
+    B = 2*sqrt(K*M);  %c ritical damping
     %B = 0;   
     
     % initial condition:
@@ -21,9 +21,12 @@ function implicit_euler_newton_raphson()
     v0 = 0;
     F0 = 0;
     
-    h = 0.2;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%
+    h = 0.01; % sampling rate, try from 1ms to 1s
+    %%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     t_start = 0;
-    t_end = 10;
+    t_end = 5;
     t=t_start:h:t_end;
     
     % Use ode45, 1kHz as ground truth:    
@@ -51,7 +54,7 @@ function implicit_euler_newton_raphson()
             v1 = v1_;
         end                        
         
-        x1 = x0 + v0 * h;   
+        x1 = x0 + v1 * h;   % xk1 = xk + h * xdotk1
         x0 = x1;
         v0 = v1;        
         
@@ -61,6 +64,8 @@ function implicit_euler_newton_raphson()
     
     legend('ode45', 'Implicit Euler');
     xlabel('Time (s)')
+    s = strcat('h = ', num2str(h), ' seconds');
+    title(s);
 end
 
 function output = v1_hat(M, B, K, F, x0, v0, h)

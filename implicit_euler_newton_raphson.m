@@ -69,7 +69,7 @@ function output = v1_hat(M, B, K, F, x0, v0, h)
 end
 
 function output = g(M, B, K, F, x0, v0, v1, h)
-    output = M*(v1-v0)/h-F+B*v1+K*(x0+h*v0);
+    output = M*(v1-v0)/h-F+B*v1+K*(x0+h*v1);
 end
 
 function xdot=msd(t,x, M, B, K)

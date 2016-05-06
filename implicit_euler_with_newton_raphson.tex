@@ -1,0 +1,197 @@
+\documentclass[english, 11pt]{article}
+\usepackage{amsmath}
+\usepackage{listings}
+\PassOptionsToPackage{hyphens}{url}\usepackage{hyperref}
+
+%Gummi|065|=)
+\title{\textbf{Implicit Euler with Newton-Raphson for\\
+               Mass-Spring-Damper System}}
+\author{Auralius Manurung}
+\date{1 Oct 2015}
+
+\lstset{language=Matlab} 
+\lstset{columns=fullflexible,basicstyle=\ttfamily}
+
+\begin{document}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Mass-Spring-Damper System}
+Define a second order system:
+\begin{equation}
+  M\ddot{x}(t)+B\dot{x}(t)+Kx(t) = f(t)
+\end{equation}
+where: $M$, $B$, $K$ are the coefficients for mass, damping, and stiffness respectively.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Newton-Raphson}
+Newton-Raphson is used to approximate $x$ that fulfills $g(x) = 0$ by iterating:
+\begin{equation}
+  x_{k+1} = x_k - \frac{g(x_k)}{g'(x(k))}
+\end{equation}
+until $x_{k+1}$ converges to a certain value.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Implicit Euler}
+Implicit Euler method says that solution to: $\dot{x} = f(t, x)$ can be found using:
+\begin{equation}
+  \label{eqn:euler_basic_eqn}
+  x_{k+1} = x_k + hf(t_{k+1}, x_{k+1})
+\end{equation}
+where $h$ is the time step.
+
+The equation above can not be solved directly since there is $x_{k+1}$ in both left and right side of the equation. Therefore, it needs to be changed to:
+\begin{equation}
+  g(x_{k+1}) = x_{k+1} - x_k - hf(t_{k+1}, x_{k+1}) = 0
+\end{equation}
+Since the equation above is now in form of: $g(x_{k+1})=0$, thus, we can use Newton-Raphson to solve $g(x_{k+1})$ and acquire $x_{k+1}$ as the result.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Implementation}
+First, we need to write the system equation into $\dot{x} = f(t,x)$ and apply the implicit Euler on it. However, since mass-spring-damper system is a second order system, we change the system equation into: $\ddot{x} = f(t, x, \dot{x})$ 
+\begin{equation}
+  \begin{split}
+    M\ddot{x}+B\dot{x}+Kx = F \\
+    \ddot{x}=\frac{F-B\dot{x}-Kx}{M}
+  \end{split}
+\end{equation}
+Next, using the implicit Euler, we solve $\ddot{x}$ to get $\dot{x}$:
+\begin{equation}
+  \begin{split}
+    0 &= \dot{x}_{k+1}-\dot{x}_{k} - h \ddot{x}_{k+1} \\
+    0 &= \dot{x}_{k+1}-\dot{x}_{k} - h \bigg(\frac{F-B\dot{x}_{k+1}-Kx_{k+1}}{M}\bigg) \\
+    0 &= g(\dot{x}_{k+1}) = \frac{M}{h}\dot{x}_{k+1}-\frac{M}{h}\dot{x}_{k} - F+B\dot{x}_{k+1}+Kx_{k+1}
+  \end{split}
+\end{equation}	
+$x_{k}$ and $\dot{x}_k$ are known, while $x_{k+1}$ is not yet known. Therefore, we need another implicit Euler to expand: $x_{k+1} = x_k + h \dot{x}_{k+1}$. As the result, we can then write:
+\begin{equation} 
+  \label{eqn:final_form}
+  \begin{split}
+    0 &= g(\dot{x}_{k+1}) = \frac{M}{h}\dot{x}_{k+1}-\frac{M}{h}\dot{x}_{k} - F+B\dot{x}_{k+1}+K(x_k+h\dot{x}_{k+1})
+  \end{split}
+\end{equation}
+Thus, the Jacobian of $g(\dot{x}_{k+1})$ can be written as:
+\begin{equation}
+  g'(\dot{x}_{k+1})=\frac{M}{h}+B+Kh
+\end{equation}
+As final step, Newton-Raphson can then be applied to find $\dot{x}_{k+1}$ for given $x_k$ and $\dot{x}_k$. Once $\dot{x}_{k+1}$ is found, $x_{k+1}$ can be calculated in an implicit Euler way with $x_{k+1} = x_k + h \dot{x}_{k+1}$ (see Eqn. \ref{eqn:euler_basic_eqn}).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussions}
+It is actually not necessary to use Newton-Rapshon, as finding $\dot{x}_{k+1}$ can also be done directly by grouping $\dot{x}_{k+1}$ in Eqn. \ref{eqn:final_form}:
+
+\begin{equation}
+  \begin{split}
+    \dot{x}_{k+1} \bigg( \frac{M}{h}+B+Kh \bigg) &= \frac{M}{h}\dot{x}_{k}+F-Kx \\
+    \dot{x}_{k+1} &= \frac{\frac{M}{h}\dot{x}_{k}+F-Kx }{\frac{M}{h}+B+Kh} \\
+    \dot{x}_{k+1} &= \frac{M\dot{x}_{k}+Fh-Khx}{M+Bh+Kh^2}
+  \end{split}  
+\end{equation}	
+However, as pointed by \cite{Baraff}, the direct solution above is not preferable when there are a large number of interconnected particles involved. At such condition, large sparse matrix inversion must be done if doing direct method. In \cite{Baraff}, the authors use conjugate-gradient method. Additionally, simulating the system in 3 dimensions will greatly contribute to the larger matrix dimension.
+
+Implicit Euler is unconditionally stable as long as the system itself is a stable system. See \cite{Rusinkiewicz}, page 21-23 for more details.
+
+
+\begin{thebibliography}{9}
+\bibitem{Baraff} 
+D. Baraff and A. Witkin, “Large steps in cloth simulation,” in Proceedings of the 25th annual conference on Computer graphics and interactive techniques - SIGGRAPH ’98, 1998, pp. 43–54 
+
+\bibitem{Rusinkiewicz} 
+Szymon Rusinkiewicz, “ODE and PDE stability analysis.”, [ONLINE] \url{http://www.cs.princeton.edu/courses/archive/fall12/cos323/notes/cos323\_f12\_lecture13\_ode.pdf}
+\end{thebibliography}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Appendices} 
+\begin{lstlisting}
+% =========================================================================
+% Solve M x_ddot + B x_dot + K x = F
+% Implicit Euler with Newton Raphson
+% =========================================================================
+
+function implicit_euler_newton_raphson()
+    clear all;
+    close all;
+    clc;
+    
+    figure;
+    hold;
+    
+    K = 100;           % spring stiffness. N/m
+    M = 5;             % mass, kg
+    B = 2*sqrt(K*M);  %c ritical damping
+    %B = 0;   
+    
+    % initial condition:
+    x0 = 0.1;
+    v0 = 0;
+    F0 = 0;
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%
+    h = 0.01; % sampling rate, try from 1ms to 1s
+    %%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    t_start = 0;
+    t_end = 5;
+    t=t_start:h:t_end;
+    
+    % Use ode45, 1kHz as ground truth:    
+    [tode45,xode45]=ode45(@msd, [t_start:0.001:t_end], [x0 v0], [], ...
+                          M, B, K);
+    plot(tode45,xode45(:,1), '--r')
+    
+    for k = 1 : length(t)
+        % Newton-Raphosn relies on good intial value
+        % As an initial guess, a 1-step forward Euler is used
+        %v1 = v1_hat(M, B, K, 0, x0, v0, h);     
+
+        % Initializing v1 = 0 also works. It just needs more iterations
+        v1 = 0;        
+        
+        % Newton-Rapshon
+        % x(k+1) = x(k) - g(x(k))/g'(x(k))
+        % Since the system is linear, g'(x(k)) = constant
+        g_d =  M/h + B + K * h;
+        while(1) % Newton-Raphson iteration
+            v1_ = v1 - (g(M, B, K, F0, x0, v0, v1, h) / g_d);            
+            if abs(v1 - v1_) <0.0001
+                break;
+            end
+            v1 = v1_;
+        end                        
+        
+        x1 = x0 + v1 * h;   % xk1 = xk + h * xdotk1
+        x0 = x1;
+        v0 = v1;        
+        
+        x(k, :) = [x1 v1];
+    end
+    plot(t, x(:,1), 'b')   
+    
+    legend('ode45', 'Implicit Euler');
+    xlabel('Time (s)')
+    s = strcat('h = ', num2str(h), ' seconds');
+    title(s);
+end
+
+function output = v1_hat(M, B, K, F, x0, v0, h)
+    v0_dot = (F - B * v0 - K * x0) / M;
+    output = v0 + h * v0_dot;
+end
+
+function output = g(M, B, K, F, x0, v0, v1, h)
+    output = M*(v1-v0)/h-F+B*v1+K*(x0+h*v1);
+end
+
+function xdot=msd(t,x, M, B, K)
+    xdot_1 = x(2);
+    xdot_2 = -(B/M)*x(2) - (K/M)*x(1);
+
+    xdot = [xdot_1 ; xdot_2 ];
+end
+\end{lstlisting}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document}
+
